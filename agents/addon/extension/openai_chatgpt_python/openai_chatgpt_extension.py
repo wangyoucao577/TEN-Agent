@@ -20,6 +20,7 @@ from rte import (
     MetadataInfo,
 )
 from .log import logger
+import json
 
 
 CMD_IN_FLUSH = "flush"
@@ -31,6 +32,7 @@ DATA_OUT_TEXT_DATA_PROPERTY_TEXT_END_OF_SEGMENT = "end_of_segment"
 
 PROPERTY_BASE_URL = "base_url"  # Optional
 PROPERTY_API_KEY = "api_key"  # Required
+PROPERTY_APP_SECRRT = "app_secret"  # Required
 PROPERTY_MODEL = "model"  # Optional
 PROPERTY_PROMPT = "prompt"  # Optional
 PROPERTY_FREQUENCY_PENALTY = "frequency_penalty"  # Optional
@@ -96,6 +98,13 @@ class OpenAIChatGPTExtension(Extension):
             openai_chatgpt_config.api_key = api_key
         except Exception as err:
             logger.info(f"GetProperty required {PROPERTY_API_KEY} failed, err: {err}")
+            return
+        
+        try:
+            app_secret = rte.get_property_string(PROPERTY_APP_SECRRT)
+            openai_chatgpt_config.app_secret = app_secret
+        except Exception as err:
+            logger.info(f"GetProperty required {PROPERTY_APP_SECRRT} failed, err: {err}")
             return
 
         try:
@@ -264,6 +273,7 @@ class OpenAIChatGPTExtension(Extension):
         self.memory.append({"role": "user", "content": input_text})
 
         def chat_completions_stream_worker(start_time, input_text, memory):
+
             try:
                 logger.info(
                     f"GetChatCompletionsStream for input text: [{input_text}] memory: {memory}"
@@ -271,6 +281,11 @@ class OpenAIChatGPTExtension(Extension):
 
                 # Get result from AI
                 resp = self.openai_chatgpt.get_chat_completions_stream(memory)
+
+                logger.info(
+                    f"xxx-resp: {resp}d"
+                )
+
                 if resp is None:
                     logger.info(
                         f"GetChatCompletionsStream for input text: [{input_text}] failed"
@@ -281,18 +296,23 @@ class OpenAIChatGPTExtension(Extension):
                 full_content = ""
                 first_sentence_sent = False
 
-                for chat_completions in resp:
+                for chat_completions in resp.iter_lines():
+
+                    json_data = json.loads(chat_completions)
+
+                    logger.info(
+                        f"xxx-chat_completions json_data: {json_data}"
+                    )
+
+
                     if start_time < self.outdate_ts:
                         logger.info(
                             f"GetChatCompletionsStream recv interrupt and flushing for input text: [{input_text}], startTs: {start_time}, outdateTs: {self.outdate_ts}"
                         )
                         break
 
-                    if (
-                        len(chat_completions.choices) > 0
-                        and chat_completions.choices[0].delta.content is not None
-                    ):
-                        content = chat_completions.choices[0].delta.content
+                    if json_data.get('resp_data').get('reply') is not None:
+                        content = json_data.get('resp_data').get('reply')
                     else:
                         content = ""
 

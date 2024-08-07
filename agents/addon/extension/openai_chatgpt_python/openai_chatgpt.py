@@ -1,15 +1,19 @@
+
 import random
 import requests
-from openai import OpenAI
+import time
+import hashlib
+import json
 from typing import List, Dict, Any, Optional
 from .log import logger
 
 
 class OpenAIChatGPTConfig:
     def __init__(self, 
-            base_url: str, 
-            api_key: str, 
-            model: str, 
+            base_url: str, #
+            api_key: str, #
+            app_secret:str,#
+            model: str, #
             prompt: str, 
             frequency_penalty: float, 
             presence_penalty: float, 
@@ -20,6 +24,7 @@ class OpenAIChatGPTConfig:
             proxy_url: Optional[str] = None):
         self.base_url = base_url
         self.api_key = api_key
+        self.app_secret = app_secret
         self.model = model
         self.prompt = prompt
         self.frequency_penalty = frequency_penalty
@@ -35,6 +40,7 @@ class OpenAIChatGPTConfig:
         return cls(
             base_url="https://api.openai.com/v1",
             api_key="",
+            app_secret="",
             model="gpt-4",  # Adjust this to match the equivalent of `openai.GPT4o` in the Python library
             prompt="You are a voice assistant who talks in a conversational way and can chat with me like my friends. I will speak to you in English or Chinese, and you will answer in the corrected and improved version of my text with the language I use. Don’t talk like a robot, instead I would like you to talk like a real human with emotions. I will use your answer for text-to-speech, so don’t return me any meaningless characters. I want you to be helpful, when I’m asking you for advice, give me precise, practical and useful advice instead of being vague. When giving me a list of options, express the options in a narrative way instead of bullet points.",
             frequency_penalty=0.9,
@@ -48,25 +54,31 @@ class OpenAIChatGPTConfig:
     
 
 class OpenAIChatGPT:
-    client = None
+    # client = None
     def __init__(self, config: OpenAIChatGPTConfig):
         self.config = config
         logger.info(f"OpenAIChatGPT initialized with config: {config.api_key}")
-        self.client = OpenAI(
-            api_key=config.api_key,
-            base_url=config.base_url
-        )
-        self.session = requests.Session()
-        if config.proxy_url:
-            proxies = {
-                "http": config.proxy_url,
-                "https": config.proxy_url,
-            }
-            self.session.proxies.update(proxies)
-        self.client.session = self.session
-
+        
     def get_chat_completions_stream(self, messages):
-        req = {
+
+
+        logger.info(
+            f"xxx-get_chat_completions_stream request"
+        )
+
+        timestamp = str(int(time.time()))
+        sign_content = self.config.api_key + self.config.app_secret + timestamp
+        sign_result = hashlib.md5(sign_content.encode('utf-8')).hexdigest()
+
+        headers = {
+            "app_key": self.config.api_key,
+            "timestamp": timestamp,
+            "sign": sign_result,
+            "Content-Type": "application/json",
+            "stream": "true"
+        }
+
+        data = {
             "model": self.config.model,
             "messages": [
                 {
@@ -75,17 +87,13 @@ class OpenAIChatGPT:
                 },
                 *messages,
             ],
-            "temperature": self.config.temperature,
-            "top_p": self.config.top_p,
-            "presence_penalty": self.config.presence_penalty,
-            "frequency_penalty": self.config.frequency_penalty,
-            "max_tokens": self.config.max_tokens,
-            "seed": self.config.seed,
-            "stream": True,
         }
 
         try:
-            response = self.client.chat.completions.create(**req)
+            response = requests.post(self.config.base_url, headers=headers, json=data, stream=True)
+            logger.info(
+                f"xxx-get_chat_completions_stream response"
+            )
             return response
         except Exception as e:
             raise Exception(f"CreateChatCompletionStream failed, err: {e}")
