@@ -22,7 +22,7 @@ const (
 	languageChinese = "zh-CN"
 	languageEnglish = "en-US"
 	// Default graph name
-	graphNameDefault = "va.openai.azure"
+	graphNameDefault = "va.openai.cosy"
 	// Property json
 	PropertyJsonFile = "./agents/property.json"
 	// Token expire time
@@ -73,6 +73,9 @@ var (
 		},
 		"OPENAI_API_KEY": {
 			{ExtensionName: extensionNameOpenaiChatgpt, Property: "api_key"},
+		},
+                "OPENAI_APP_SECRET": {
+			{ExtensionName: extensionNameOpenaiChatgpt, Property: "app_secret"},
 		},
 		"OPENAI_BASE_URL": {
 			{ExtensionName: extensionNameOpenaiChatgpt, Property: "base_url"},
