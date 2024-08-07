@@ -74,7 +74,7 @@ var (
 		"OPENAI_API_KEY": {
 			{ExtensionName: extensionNameOpenaiChatgpt, Property: "api_key"},
 		},
-                "OPENAI_APP_SECRET": {
+		"OPENAI_APP_SECRET": {
 			{ExtensionName: extensionNameOpenaiChatgpt, Property: "app_secret"},
 		},
 		"OPENAI_BASE_URL": {

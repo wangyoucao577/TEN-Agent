@@ -643,6 +643,7 @@
                         "property": {
                             "base_url": "",
                             "api_key": "<openai_api_key>",
+                            "app_secret": "<openai_app_secret>",
                             "frequency_penalty": 0.9,
                             "model": "gpt-3.5-turbo",
                             "max_tokens": 512,
