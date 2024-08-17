@@ -69,7 +69,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// load task prompt
+	// load prompt template
 	promptTmpl := internal.PromptTemplate{
 		CustomerPromptTemplate: os.Getenv("CUSTOMER_PROMPT_TEMPLATE"),
 		TaskPromptTemplate:     os.Getenv("TASK_PROMPT_TEMPLATE"),
@@ -77,6 +77,16 @@ func main() {
 	if err := promptTmpl.Init(); err != nil {
 		slog.Error("prompt template init failed", slog.Any("error", err))
 		os.Exit(1)
+	}
+
+	// load generate task prompt
+	customerGenerator := internal.CustomerGenerator{
+		Prompt: os.Getenv("GENERATE_CUSTOMER_PROMPT"),
+
+		APIKey:   os.Getenv("OPENAI_API_KEY"),
+		BaseURL:  os.Getenv("OPENAI_BASE_URL"),
+		Model:    os.Getenv("OPENAI_MODEL"),
+		ProxyURL: os.Getenv("OPENAI_PROXY_URL"),
 	}
 
 	// Start server
@@ -89,6 +99,7 @@ func main() {
 		WorkerQuitTimeoutSeconds: workerQuitTimeoutSeconds,
 		DB:                       db,
 		PromptTmpl:               promptTmpl,
+		CustomerGenerator:        customerGenerator,
 	}
 	httpServer := internal.NewHttpServer(httpServerConfig)
 	httpServer.Start()

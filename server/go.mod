@@ -9,6 +9,7 @@ require (
 	github.com/gogf/gf v1.16.9
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
+	github.com/sashabaranov/go-openai v1.28.2
 	github.com/tidwall/gjson v1.17.1
 	github.com/tidwall/sjson v1.2.5
 )

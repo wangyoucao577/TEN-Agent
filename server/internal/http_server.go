@@ -40,8 +40,9 @@ type HttpServerConfig struct {
 	WorkersMax               int
 	WorkerQuitTimeoutSeconds int
 
-	DB         *DB
-	PromptTmpl PromptTemplate
+	DB                *DB
+	PromptTmpl        PromptTemplate
+	CustomerGenerator CustomerGenerator
 }
 
 type PingReq struct {
@@ -92,6 +93,10 @@ type CustomerListReq struct {
 
 type CustomerGetReq struct {
 	ID string `form:"id,omitempty" json:"id,omitempty"`
+}
+
+type CustomerGenerateReq struct {
+	Query string `json:"query,omitempty"`
 }
 
 func NewHttpServer(httpServerConfig *HttpServerConfig) *HttpServer {
@@ -492,7 +497,21 @@ func (s *HttpServer) handlerCustomerGet(c *gin.Context) {
 }
 
 func (s *HttpServer) handlerCustomerGenerate(c *gin.Context) {
-	// TODO:
+	var req CustomerGenerateReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		slog.Error("params invalid", slog.Any("error", err), logTag)
+		s.output(c, codeErrParamsInvalid, nil, http.StatusBadRequest)
+		return
+	}
+
+	err := s.config.CustomerGenerator.Generate(req.Query)
+	if err != nil {
+		slog.Error("customer generate failed", slog.Any("error", err), logTag)
+		s.output(c, codeErrParamsInvalid, nil, http.StatusBadRequest)
+		return
+	}
+
+	// TODO: return data
 	s.output(c, codeSuccess, nil)
 }
 
