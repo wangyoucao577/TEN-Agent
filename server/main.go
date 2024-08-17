@@ -58,9 +58,9 @@ func main() {
 	}
 
 	// load db
-	customerInfoDatabase := os.Getenv("CUSTOMERINFO_DATABASE")
+	customerInfoDatabase := os.Getenv("CUSTOMER_INFO_DATABASE")
 	if len(customerInfoDatabase) == 0 {
-		slog.Error("environment CUSTOMERINFO_DATABASE invalid")
+		slog.Error("environment CUSTOMER_INFO_DATABASE invalid")
 		os.Exit(1)
 	}
 	db := internal.NewDatabase(customerInfoDatabase)
@@ -70,8 +70,14 @@ func main() {
 	}
 
 	// load task prompt
-	taskPrompt := os.Getenv("TASK_PROMPT")
-	internal.SetTaskPrompt(taskPrompt)
+	promptTmpl := internal.PromptTemplate{
+		CustomerPromptTemplate: os.Getenv("CUSTOMER_PROMPT_TEMPLATE"),
+		TaskPromptTemplate:     os.Getenv("TASK_PROMPT_TEMPLATE"),
+	}
+	if err := promptTmpl.Init(); err != nil {
+		slog.Error("prompt template init failed", slog.Any("error", err))
+		os.Exit(1)
+	}
 
 	// Start server
 	httpServerConfig := &internal.HttpServerConfig{
@@ -82,6 +88,7 @@ func main() {
 		WorkersMax:               workersMax,
 		WorkerQuitTimeoutSeconds: workerQuitTimeoutSeconds,
 		DB:                       db,
+		PromptTmpl:               promptTmpl,
 	}
 	httpServer := internal.NewHttpServer(httpServerConfig)
 	httpServer.Start()

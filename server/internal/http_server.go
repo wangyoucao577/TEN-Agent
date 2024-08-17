@@ -40,7 +40,8 @@ type HttpServerConfig struct {
 	WorkersMax               int
 	WorkerQuitTimeoutSeconds int
 
-	DB *DB
+	DB         *DB
+	PromptTmpl PromptTemplate
 }
 
 type PingReq struct {
@@ -166,7 +167,7 @@ func (s *HttpServer) handlerStart(c *gin.Context) {
 	}
 
 	customerInfo := s.config.DB.Get(req.CustomerID)
-	req.Prompt = generatePrompt(customerInfo)
+	req.Prompt = s.config.PromptTmpl.GeneratePrompt(customerInfo)
 
 	// auto decide if no explicity set
 	if len(req.VoiceType) == 0 && customerInfo != nil {
