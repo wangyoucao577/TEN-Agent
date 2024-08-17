@@ -8,6 +8,10 @@ import (
 	"os"
 )
 
+const (
+	CustomerFieldKeyID = "id"
+)
+
 type CustomerFields map[string]string // fields name mapping, EN->CN
 
 func (c CustomerFields) Get() map[string]string {

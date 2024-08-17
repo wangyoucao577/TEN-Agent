@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/sashabaranov/go-openai"
 )
@@ -19,8 +20,7 @@ type CustomerGenerator struct {
 	ProxyURL string
 }
 
-func (c CustomerGenerator) Generate(query string) error {
-	slog.Info("customer generate", slog.String("query", query))
+func (c CustomerGenerator) Generate(query string) (string, error) {
 
 	// create client
 	conf := openai.DefaultConfig(c.APIKey)
@@ -30,39 +30,46 @@ func (c CustomerGenerator) Generate(query string) error {
 	if c.ProxyURL != "" {
 		proxyUrl, err := url.Parse(c.ProxyURL)
 		if err != nil {
-			return fmt.Errorf("create OpenaiChatGPT client failed on parsing proxy url, err: %v", err)
+			return "", fmt.Errorf("create OpenaiChatGPT client failed on parsing proxy url, err: %v", err)
 		}
 		conf.HTTPClient = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
 	}
 	client := openai.NewClientWithConfig(conf)
 
+	messages := append(
+		[]openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: c.Prompt,
+			},
+		},
+		openai.ChatCompletionMessage{
+			Role:    openai.ChatMessageRoleUser,
+			Content: query,
+		},
+	)
+
+	slog.Info("chat", slog.Any("messages", messages))
+
 	// create request
 	req := openai.ChatCompletionRequest{
-		Messages: append(
-			[]openai.ChatCompletionMessage{
-				{
-					Role:    openai.ChatMessageRoleSystem,
-					Content: c.Prompt,
-				},
-			},
-			openai.ChatCompletionMessage{
-				Role:    openai.ChatMessageRoleUser,
-				Content: query,
-			},
-		),
-		Model:  c.Model,
-		Stream: false,
+		Messages: messages,
+		Model:    c.Model,
+		Stream:   false,
 	}
-
 	resp, err := client.CreateChatCompletion(context.Background(), req)
 	if err != nil {
-		return fmt.Errorf("CreateChatCompletion failed, err %v", err)
+		return "", fmt.Errorf("CreateChatCompletion failed, err %v", err)
 	}
 	if len(resp.Choices) == 0 {
-		return fmt.Errorf("empty resp %v", resp)
+		return "", fmt.Errorf("empty resp %v", resp)
 	}
 
-	// TODO: return
-	slog.Info("customer generated", slog.String("content", resp.Choices[0].Message.Content))
-	return nil
+	content := resp.Choices[0].Message.Content
+
+	// remove ```json and ```, only keep json contents
+	content = strings.TrimPrefix(content, "```json")
+	content = strings.TrimSuffix(content, "```")
+	slog.Info("customer generated", slog.String("content", content))
+	return content, nil
 }

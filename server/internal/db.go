@@ -1,31 +1,34 @@
 package internal
 
 import (
-	"crypto/sha1"
 	"encoding/csv"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
-	"strings"
 )
 
 type DB struct {
-	m      map[string]CustomerInfo
-	fields CustomerFields
+	m map[string]CustomerInfo
 
-	infoPath   string // customerinfo.csv
-	fieldsPath string // customerfields.csv
+	fields  CustomerFields
+	headers []string
+
+	infoPath          string // customerinfo.csv
+	fieldsPath        string // customerfields.csv
+	generatedInfoPath string // customerinfo.csv.generated.csv write generated in a seperated file
 }
 
 func NewDatabase(infoPath, fieldsPath string) *DB {
 	return &DB{
-		m:      map[string]CustomerInfo{},
-		fields: nil,
+		m: map[string]CustomerInfo{},
 
-		infoPath:   infoPath,
-		fieldsPath: fieldsPath,
+		fields:  nil,
+		headers: []string{},
+
+		infoPath:          infoPath,
+		fieldsPath:        fieldsPath,
+		generatedInfoPath: infoPath + ".generated.csv",
 	}
 }
 
@@ -59,6 +62,13 @@ func (d *DB) Load() error {
 		}
 		if len(headers) == 0 {
 			headers = record
+			for _, h := range headers {
+				if en, ok := customerInfoFieldsMappingCN2EN[h]; ok {
+					d.headers = append(d.headers, en)
+				} else {
+					d.headers = append(d.headers, "") // append "" as placeholder to make sure correct columns
+				}
+			}
 			continue
 		}
 
@@ -73,10 +83,9 @@ func (d *DB) Load() error {
 		}
 
 		// generate user id
-		sum := sha1.Sum([]byte(strings.Join(record, ",")))
-		user["id"] = hex.EncodeToString(sum[:])
+		user[CustomerFieldKeyID] = GenerateCustomerID(user)
 
-		d.m[user["id"]] = user
+		d.m[user[CustomerFieldKeyID]] = user
 	}
 
 	slog.Info("database loaded", slog.String("path", d.infoPath), slog.Int("count", len(d.m)))
@@ -123,5 +132,32 @@ func (d *DB) Get(id string) CustomerInfo {
 	if u, ok := d.m[id]; ok {
 		return u
 	}
+	return nil
+}
+
+func (d *DB) Write(u CustomerInfo) error {
+	// save in memory
+	d.m[u[CustomerFieldKeyID]] = u
+
+	file, err := os.OpenFile(d.generatedInfoPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		return fmt.Errorf("open csv file %s failed, err %v", d.infoPath, err)
+	}
+	defer file.Close()
+
+	records := []string{}
+	for _, h := range d.headers {
+		if v, ok := u[h]; ok {
+			records = append(records, v)
+		} else {
+			records = append(records, "") // append "" as placeholder to make sure correct columns
+		}
+	}
+
+	writer := csv.NewWriter(file)
+	if err := writer.Write(records); err != nil {
+		return fmt.Errorf("write csv file %s failed, err %v", d.generatedInfoPath, err)
+	}
+	writer.Flush()
 	return nil
 }

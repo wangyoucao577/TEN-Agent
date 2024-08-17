@@ -504,15 +504,30 @@ func (s *HttpServer) handlerCustomerGenerate(c *gin.Context) {
 		return
 	}
 
-	err := s.config.CustomerGenerator.Generate(req.Query)
+	content, err := s.config.CustomerGenerator.Generate(req.Query)
 	if err != nil {
 		slog.Error("customer generate failed", slog.Any("error", err), logTag)
 		s.output(c, codeErrParamsInvalid, nil, http.StatusBadRequest)
 		return
 	}
 
-	// TODO: return data
-	s.output(c, codeSuccess, nil)
+	var customerInfo CustomerInfo
+	if err := json.Unmarshal([]byte(content), &customerInfo); err != nil {
+		slog.Error("customer unmarshal failed", slog.Any("error", err), logTag)
+		s.output(c, codeErrParamsInvalid, nil, http.StatusBadRequest)
+		return
+	}
+
+	customerInfo[CustomerFieldKeyID] = GenerateCustomerID(customerInfo)
+
+	if err := s.config.DB.Write(customerInfo); err != nil {
+		slog.Error("customer store failed", slog.Any("error", err), logTag)
+		s.output(c, codeErrParamsInvalid, nil, http.StatusBadRequest)
+		return
+	}
+
+	// return data
+	s.output(c, codeSuccess, customerInfo)
 }
 
 func (s *HttpServer) handleCustomerGetProperties(c *gin.Context) {
