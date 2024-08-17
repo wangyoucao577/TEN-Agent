@@ -39,6 +39,8 @@ type HttpServerConfig struct {
 	TTSVendorEnglish         string
 	WorkersMax               int
 	WorkerQuitTimeoutSeconds int
+
+	DB *DB
 }
 
 type PingReq struct {

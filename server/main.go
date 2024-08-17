@@ -57,6 +57,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	// load db
+	userinfoDatabase := os.Getenv("USERINFO_DATABASE")
+	if len(userinfoDatabase) == 0 {
+		slog.Error("environment USERINFO_DATABASE invalid")
+		os.Exit(1)
+	}
+	db := internal.NewDatabase(userinfoDatabase)
+	if err := db.Load(); err != nil {
+		slog.Error("database load failed", "err", err)
+		os.Exit(1)
+	}
+
 	// Start server
 	httpServerConfig := &internal.HttpServerConfig{
 		AppId:                    agoraAppId,
@@ -65,6 +77,7 @@ func main() {
 		Port:                     os.Getenv("SERVER_PORT"),
 		WorkersMax:               workersMax,
 		WorkerQuitTimeoutSeconds: workerQuitTimeoutSeconds,
+		DB:                       db,
 	}
 	httpServer := internal.NewHttpServer(httpServerConfig)
 	httpServer.Start()
