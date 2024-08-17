@@ -58,12 +58,12 @@ func main() {
 	}
 
 	// load db
-	userinfoDatabase := os.Getenv("USERINFO_DATABASE")
-	if len(userinfoDatabase) == 0 {
-		slog.Error("environment USERINFO_DATABASE invalid")
+	customerInfoDatabase := os.Getenv("CUSTOMERINFO_DATABASE")
+	if len(customerInfoDatabase) == 0 {
+		slog.Error("environment CUSTOMERINFO_DATABASE invalid")
 		os.Exit(1)
 	}
-	db := internal.NewDatabase(userinfoDatabase)
+	db := internal.NewDatabase(customerInfoDatabase)
 	if err := db.Load(); err != nil {
 		slog.Error("database load failed", "err", err)
 		os.Exit(1)

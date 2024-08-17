@@ -83,6 +83,14 @@ type VectorDocumentUpload struct {
 	File        *multipart.FileHeader `form:"file" binding:"required"`
 }
 
+type CustomerListReq struct {
+	Fields string `form:"fields,omitempty" json:"fields,omitempty"`
+}
+
+type CustomerGetReq struct {
+	ID string `form:"id,omitempty" json:"id,omitempty"`
+}
+
 func NewHttpServer(httpServerConfig *HttpServerConfig) *HttpServer {
 	return &HttpServer{
 		config: httpServerConfig,
@@ -422,9 +430,54 @@ func (s *HttpServer) Start() {
 	r.GET("/vector/document/preset/list", s.handlerVectorDocumentPresetList)
 	r.POST("/vector/document/update", s.handlerVectorDocumentUpdate)
 	r.POST("/vector/document/upload", s.handlerVectorDocumentUpload)
+	r.GET("/customer/properties", s.handleCustomerGetProperties)
+	r.GET("/customer/customers", s.handlerCustomersList)
+	r.GET("/customer/customer", s.handlerCustomerGet)
+	r.POST("/customer/customer", s.handlerCustomerGenerate)
 
 	slog.Info("server start", "port", s.config.Port, logTag)
 
 	go cleanWorker()
 	r.Run(fmt.Sprintf(":%s", s.config.Port))
+}
+
+func (s *HttpServer) handlerCustomersList(c *gin.Context) {
+
+	var req CustomerListReq
+	if err := c.ShouldBindQuery(&req); err != nil {
+		slog.Error("params invalid", slog.Any("error", err), logTag)
+		s.output(c, codeErrParamsInvalid, nil, http.StatusBadRequest)
+		return
+	}
+
+	fields := strings.Split(req.Fields, ",")
+	data := s.config.DB.List(fields)
+
+	s.output(c, codeSuccess, data)
+}
+
+func (s *HttpServer) handlerCustomerGet(c *gin.Context) {
+	var req CustomerGetReq
+	if err := c.ShouldBindQuery(&req); err != nil {
+		slog.Error("params invalid", slog.Any("error", err), logTag)
+		s.output(c, codeErrParamsInvalid, nil, http.StatusBadRequest)
+		return
+	}
+
+	data := s.config.DB.Get(req.ID)
+	if data == nil || data.Empty() {
+		slog.Error("customer not found", logTag)
+		s.output(c, codeErrCustomerNotFound, nil, http.StatusNotFound)
+		return
+	}
+	s.output(c, codeSuccess, data)
+}
+
+func (s *HttpServer) handlerCustomerGenerate(c *gin.Context) {
+	// TODO:
+	s.output(c, codeSuccess, nil)
+}
+
+func (s *HttpServer) handleCustomerGetProperties(c *gin.Context) {
+	s.output(c, codeSuccess, GetCustomerProperties())
 }
