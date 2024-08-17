@@ -21,13 +21,14 @@ func (p *PromptTemplate) Init() error {
 		slog.Error("parse taskPromptTemplate failed", slog.Any("error", err))
 		return err
 	}
+	slog.Info("task prompt template initalized", slog.String("taskPromptTemplate", p.TaskPromptTemplate))
 
 	p.customerTmpl, err = template.New("customer_prompt").Parse(p.CustomerPromptTemplate)
 	if err != nil {
 		slog.Error("parse customerPromptTemplate failed", slog.Any("error", err))
 		return err
 	}
-	slog.Info("prompt template initalized", slog.String("taskPromptTemplate", p.TaskPromptTemplate), slog.String("customerPromptTemplate", p.CustomerPromptTemplate))
+	slog.Info("customer prompt template initalized", slog.String("customerPromptTemplate", p.CustomerPromptTemplate))
 
 	return nil
 }

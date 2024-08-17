@@ -12,33 +12,40 @@ import (
 )
 
 type DB struct {
-	m map[string]CustomerInfo
+	m      map[string]CustomerInfo
+	fields CustomerFields
 
-	path string // .csv
+	infoPath   string // customerinfo.csv
+	fieldsPath string // customerfields.csv
 }
 
-func NewDatabase(path string) *DB {
+func NewDatabase(infoPath, fieldsPath string) *DB {
 	return &DB{
-		m:    map[string]CustomerInfo{},
-		path: path,
+		m:      map[string]CustomerInfo{},
+		fields: nil,
+
+		infoPath:   infoPath,
+		fieldsPath: fieldsPath,
 	}
 }
 
 func (d *DB) Load() error {
+	if fields, err := LoadCustomerFieldsFromCSV(d.fieldsPath); err != nil {
+		return fmt.Errorf("load customer fields from csv file %s failed, err %v", d.fieldsPath, err)
+	} else {
+		d.fields = fields
+	}
 
-	file, err := os.Open(d.path)
+	file, err := os.Open(d.infoPath)
 	if err != nil {
-		return fmt.Errorf("open csv file %s failed, err %v", d.path, err)
+		return fmt.Errorf("open csv file %s failed, err %v", d.infoPath, err)
 	}
 	defer file.Close()
 
 	reader := csv.NewReader(file)
 
 	// get cn->en fields key mapping
-	customerInfoFieldsMappingCN2EN := map[string]string{}
-	for k, v := range customerInfoFieldsMappingEN2CN {
-		customerInfoFieldsMappingCN2EN[v] = k
-	}
+	customerInfoFieldsMappingCN2EN := d.fields.GetReversed()
 
 	// read csv per line
 	var headers []string
@@ -72,7 +79,7 @@ func (d *DB) Load() error {
 		d.m[user["id"]] = user
 	}
 
-	slog.Info("database loaded", slog.String("path", d.path), slog.Int("count", len(d.m)))
+	slog.Info("database loaded", slog.String("path", d.infoPath), slog.Int("count", len(d.m)))
 	i := 0
 	for k, v := range d.m {
 		slog.Info("record peek", slog.Any(k, v))

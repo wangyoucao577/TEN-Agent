@@ -58,12 +58,13 @@ func main() {
 	}
 
 	// load db
-	customerInfoDatabase := os.Getenv("CUSTOMER_INFO_DATABASE")
-	if len(customerInfoDatabase) == 0 {
-		slog.Error("environment CUSTOMER_INFO_DATABASE invalid")
+	customerInfoPath := os.Getenv("DATABASE_FILE_PATH_CUSTOMER_INFO")
+	customerFieldsPath := os.Getenv("DATABASE_FILE_PATH_CUSTOMER_FIELDS")
+	if len(customerInfoPath) == 0 || len(customerFieldsPath) == 0 {
+		slog.Error("environment DATABASE_FILE_PATH_CUSTOMER_INFO/DATABASE_FILE_PATH_CUSTOMER_FIELDS invalid")
 		os.Exit(1)
 	}
-	db := internal.NewDatabase(customerInfoDatabase)
+	db := internal.NewDatabase(customerInfoPath, customerFieldsPath)
 	if err := db.Load(); err != nil {
 		slog.Error("database load failed", "err", err)
 		os.Exit(1)

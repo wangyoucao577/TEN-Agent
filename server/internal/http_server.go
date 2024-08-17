@@ -516,5 +516,5 @@ func (s *HttpServer) handlerCustomerGenerate(c *gin.Context) {
 }
 
 func (s *HttpServer) handleCustomerGetProperties(c *gin.Context) {
-	s.output(c, codeSuccess, GetCustomerProperties())
+	s.output(c, codeSuccess, s.config.DB.fields.Get())
 }
