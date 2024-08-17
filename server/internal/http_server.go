@@ -57,6 +57,8 @@ type StartReq struct {
 	Token                string `json:"token,omitempty"`
 	VoiceType            string `json:"voice_type,omitempty"`
 	WorkerHttpServerPort int32  `json:"worker_http_server_port,omitempty"`
+	CustomerID           string `json:"customer_id,omitempty"`
+	Prompt               string `json:"prompt,omitempty"`
 }
 
 type StopReq struct {
@@ -162,6 +164,21 @@ func (s *HttpServer) handlerStart(c *gin.Context) {
 		s.output(c, codeErrChannelExisted, http.StatusBadRequest)
 		return
 	}
+
+	customerInfo := s.config.DB.Get(req.CustomerID)
+	req.Prompt = generatePrompt(customerInfo)
+
+	// auto decide if no explicity set
+	if len(req.VoiceType) == 0 && customerInfo != nil {
+		if gender, ok := customerInfo["gender"]; ok {
+			if strings.Contains(gender, "女") {
+				req.VoiceType = voiceTypeMale
+			} else {
+				req.VoiceType = voiceTypeFemale
+			}
+		}
+	}
+	slog.Info("handlerStart", slog.String("customerID", req.CustomerID), slog.String("voiceType", req.VoiceType), slog.String("prompt", req.Prompt), logTag)
 
 	req.WorkerHttpServerPort = getHttpServerPort()
 	propertyJsonFile, logFile, err := s.processProperty(&req)

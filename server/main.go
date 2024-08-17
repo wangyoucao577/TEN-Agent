@@ -69,6 +69,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	// load task prompt
+	taskPrompt := os.Getenv("TASK_PROMPT")
+	internal.SetTaskPrompt(taskPrompt)
+
 	// Start server
 	httpServerConfig := &internal.HttpServerConfig{
 		AppId:                    agoraAppId,

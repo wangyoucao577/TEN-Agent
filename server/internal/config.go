@@ -165,6 +165,9 @@ var (
 		"WorkerHttpServerPort": {
 			{ExtensionName: extensionNameHttpServer, Property: "listen_port"},
 		},
+		"Prompt": {
+			{ExtensionName: extensionNameOpenaiChatgpt, Property: "prompt"},
+		},
 	}
 
 	// Map the voice name to the voice type
