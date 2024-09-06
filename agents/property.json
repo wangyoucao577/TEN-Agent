@@ -25,7 +25,8 @@
                             "agora_asr_language": "en-US",
                             "agora_asr_vendor_key": "$AZURE_STT_KEY",
                             "agora_asr_vendor_region": "$AZURE_STT_REGION",
-                            "agora_asr_session_control_file_path": "session_control.conf"
+                            "agora_asr_session_control_file_path": "session_control.conf",
+                            "sdk_params": ""
                         }
                     },
                     {
@@ -224,7 +225,8 @@
                             "agora_asr_language": "en-US",
                             "agora_asr_vendor_key": "$AZURE_STT_KEY",
                             "agora_asr_vendor_region": "$AZURE_STT_REGION",
-                            "agora_asr_session_control_file_path": "session_control.conf"
+                            "agora_asr_session_control_file_path": "session_control.conf",
+                            "sdk_params": ""
                         }
                     },
                     {
@@ -429,7 +431,8 @@
                             "agora_asr_language": "en-US",
                             "agora_asr_vendor_key": "$AZURE_STT_KEY",
                             "agora_asr_vendor_region": "$AZURE_STT_REGION",
-                            "agora_asr_session_control_file_path": "session_control.conf"
+                            "agora_asr_session_control_file_path": "session_control.conf",
+                            "sdk_params": ""
                         }
                     },
                     {
@@ -593,7 +596,8 @@
                             "agora_asr_language": "en-US",
                             "agora_asr_vendor_key": "$AZURE_STT_KEY",
                             "agora_asr_vendor_region": "$AZURE_STT_REGION",
-                            "agora_asr_session_control_file_path": "session_control.conf"
+                            "agora_asr_session_control_file_path": "session_control.conf",
+                            "sdk_params": ""
                         }
                     },
                     {
@@ -793,7 +797,8 @@
                             "agora_asr_language": "en-US",
                             "agora_asr_vendor_key": "$AZURE_STT_KEY",
                             "agora_asr_vendor_region": "$AZURE_STT_REGION",
-                            "agora_asr_session_control_file_path": "session_control.conf"
+                            "agora_asr_session_control_file_path": "session_control.conf",
+                            "sdk_params": ""
                         }
                     },
                     {
@@ -996,7 +1001,8 @@
                             "agora_asr_language": "en-US",
                             "agora_asr_vendor_key": "$AZURE_STT_KEY",
                             "agora_asr_vendor_region": "$AZURE_STT_REGION",
-                            "agora_asr_session_control_file_path": "session_control.conf"
+                            "agora_asr_session_control_file_path": "session_control.conf",
+                            "sdk_params": ""
                         }
                     },
                     {
@@ -1164,7 +1170,8 @@
                             "agora_asr_language": "en-US",
                             "agora_asr_vendor_key": "$AZURE_STT_KEY",
                             "agora_asr_vendor_region": "$AZURE_STT_REGION",
-                            "agora_asr_session_control_file_path": "session_control.conf"
+                            "agora_asr_session_control_file_path": "session_control.conf",
+                            "sdk_params": ""
                         }
                     },
                     {
@@ -1396,7 +1403,8 @@
                             "agora_asr_vendor_key": "$AZURE_STT_KEY",
                             "agora_asr_vendor_region": "$AZURE_STT_REGION",
                             "agora_asr_session_control_file_path": "session_control.conf",
-                            "subscribe_video_pix_fmt": 4
+                            "subscribe_video_pix_fmt": 4,
+                            "sdk_params": ""
                         }
                     },
                     {
@@ -1608,7 +1616,8 @@
                             "agora_asr_language": "en-US",
                             "agora_asr_vendor_key": "$AZURE_STT_KEY",
                             "agora_asr_vendor_region": "$AZURE_STT_REGION",
-                            "agora_asr_session_control_file_path": "session_control.conf"
+                            "agora_asr_session_control_file_path": "session_control.conf",
+                            "sdk_params": ""
                         }
                     },
                     {
@@ -1807,7 +1816,8 @@
                             "agora_asr_language": "en-US",
                             "agora_asr_vendor_key": "$AZURE_STT_KEY",
                             "agora_asr_vendor_region": "$AZURE_STT_REGION",
-                            "agora_asr_session_control_file_path": "session_control.conf"
+                            "agora_asr_session_control_file_path": "session_control.conf",
+                            "sdk_params": ""
                         }
                     },
                     {
