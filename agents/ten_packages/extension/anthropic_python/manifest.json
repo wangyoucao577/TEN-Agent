@@ -19,5 +19,23 @@
       "README.md"
     ]
   },
-  "api": {}
+  "api": {
+    "property": {
+      "api_key": {
+        "type": "string"
+      },
+      "model": {
+        "type": "string"
+      },
+      "max_tokens": {
+        "type": "int64"
+      },
+      "prompt": {
+        "type": "string"
+      },
+      "greeting": {
+        "type": "string"
+      }
+    }
+  }
 }
