@@ -17,6 +17,9 @@ from ten import (
 )
 from .log import logger
 from dataclasses import dataclass, fields
+import builtins
+import asyncio
+import threading
 import anthropic
 
 
@@ -33,11 +36,12 @@ class AnthropicExtensionConfig:
             if not ten_env.is_property_exist(field.name):
                 continue
             match field.type:
-                case 'str':
+                case builtins.str:
                     val = ten_env.get_property_string(field.name)
-                    setattr(self, field.name, val)
-                    logger.info(f"{field.name}={val}")
-                case 'int':
+                    if val:
+                        setattr(self, field.name, val)
+                        logger.info(f"{field.name}={val}")
+                case builtins.int:
                     val = ten_env.get_property_int(field.name)
                     setattr(self, field.name, val)
                     logger.info(f"{field.name}={val}")
@@ -51,17 +55,30 @@ class AnthropicExtension(Extension):
 
         self.config = AnthropicExtensionConfig()
         self.client = None
+        self.loop = None
+        self.thread = None
+
+    def _async_loop(self, loop):
+        asyncio.set_event_loop(loop)
+        loop.run_forever()
 
     def on_start(self, ten_env: TenEnv) -> None:
         logger.info("AnthropicExtension on_start")
 
         # update config from property
         self.config.init_vars_from_ten_property(ten_env)
+        logger.info(f"config: {self.config}")
 
         # initialize client
         self.client = anthropic.Anthropic(
             api_key=self.config.api_key,
         )
+
+        # start async loop
+        self.loop = asyncio.new_event_loop()
+        self.thread = threading.Thread(
+            target=self._async_loop, args=(self.loop,))
+        self.thread.start()
 
         ten_env.on_start_done()
 
@@ -69,6 +86,12 @@ class AnthropicExtension(Extension):
         logger.info("AnthropicExtension on_stop")
 
         # clean up resources
+        if self.loop:
+            self.loop.call_soon_threadsafe(self.loop.stop)
+        if self.thread:
+            self.thread.join()
+        self.thread = None
+        self.loop = None
         self.client = None
 
         ten_env.on_stop_done()
