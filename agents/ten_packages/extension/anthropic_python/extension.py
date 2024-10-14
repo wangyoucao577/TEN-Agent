@@ -59,8 +59,17 @@ class AnthropicExtension(Extension):
         self.thread = None
 
     def _async_loop(self, loop):
-        asyncio.set_event_loop(loop)
-        loop.run_forever()
+        try:
+            asyncio.set_event_loop(loop)
+
+            # run_forever() returns after calling loop.stop()
+            loop.run_forever()
+            tasks = asyncio.Task.all_tasks()
+            for t in [t for t in tasks if not (t.done() or t.cancelled())]:
+                # give canceled tasks the last chance to run
+                loop.run_until_complete(t)
+        finally:
+            loop.close()
 
     def on_start(self, ten_env: TenEnv) -> None:
         logger.info("AnthropicExtension on_start")
@@ -87,7 +96,7 @@ class AnthropicExtension(Extension):
 
         # clean up resources
         if self.loop:
-            self.loop.call_soon_threadsafe(self.loop.stop)
+            self.loop.call_soon_threadsafe(self._stop)
         if self.thread:
             self.thread.join()
         self.thread = None
@@ -97,26 +106,12 @@ class AnthropicExtension(Extension):
         ten_env.on_stop_done()
 
     def on_cmd(self, ten_env: TenEnv, cmd: Cmd) -> None:
-        cmd_name = cmd.get_name()
-        logger.info("on_cmd name {}".format(cmd_name))
-
-        # TODO: process cmd
-
-        cmd_result = CmdResult.create(StatusCode.OK)
-        ten_env.return_result(cmd_result, cmd)
+        logger.info(f"on_cmd name {cmd.get_name()}")
+        asyncio.run_coroutine_threadsafe(self._async_on_cmd, cmd)
 
     def on_data(self, ten_env: TenEnv, data: Data) -> None:
-        # TODO: process data
-
-        # message = self.client.messages.create(
-        #     model="claude-3-5-sonnet-20240620",
-        #     max_tokens=1024,
-        #     messages=[
-        #         {"role": "user", "content": "Hello, Claude"}
-        #     ]
-        # )
-        # print(message.content)
-        pass
+        logger.info(f"on_data name {data.get_name()}")
+        asyncio.run_coroutine_threadsafe(self._async_on_data, data)
 
     def on_audio_frame(self, ten_env: TenEnv, audio_frame: AudioFrame) -> None:
         # TODO: process pcm frame
@@ -125,3 +120,63 @@ class AnthropicExtension(Extension):
     def on_video_frame(self, ten_env: TenEnv, video_frame: VideoFrame) -> None:
         # TODO: process image frame
         pass
+
+    async def _async_on_cmd(self, ten_env: TenEnv, cmd: Cmd) -> None:
+        try:
+            # process cmd
+            logger.info(f"async_on_cmd name {cmd.get_name()}")
+            match cmd.get_name():
+                case "flush":
+                    await self._cancel_all_tasks()
+                    ten_env.send_cmd(Cmd.create("flush"), None)
+                    logger.info("cmd flush sent")
+                case _:
+                    pass
+            ten_env.return_result(CmdResult.create(StatusCode.OK), cmd)
+        except asyncio.CancelledError:
+            ten_env.return_result(CmdResult.create(StatusCode.ERROR), cmd)
+            raise
+        finally:
+            pass
+
+    async def _async_on_data(self, ten_env: TenEnv, data: Data) -> None:
+        try:
+            logger.info(f"async_on_data name {data.get_name()}")
+            # TODO: process data
+
+            messages = []
+            if self.config.prompt:
+                messages.append(
+                    {"role": "system", "content": self.config.prompt})
+            # TODO: memory
+            messages.append({"role": "user", "content": "Hello, Claude"})
+
+            async with self.client.messages.stream(
+                model=self.config.model,
+                max_tokens=self.config.max_tokens,
+                messages=messages
+            ) as stream:
+                async for text in stream.text_stream:
+                    print(text, end="", flush=True)
+                print()
+
+            message = await stream.get_final_message()
+            print(message.to_json())
+
+        except asyncio.CancelledError:
+            raise
+        finally:
+            # TODO: append to memory
+            pass
+
+    async def _cancel_all_tasks(self) -> None:
+        tasks = asyncio.Task.all_tasks()
+        logger.info(f"cancelling tasks {len(tasks)}")
+        for t in tasks:
+            t.cancel()
+        await asyncio.gather(tasks, return_exceptions=True)
+        logger.info(f"cancelled tasks {len(tasks)}")
+
+    async def _stop(self) -> None:
+        await self._cancel_all_tasks()
+        self.loop.stop()
