@@ -590,6 +590,12 @@ class OpenAIV2VExtension(Extension):
             session=SessionUpdateParams(
                 instructions=prompt,
                 model=self.config.model,
+                turn_detection=ServerVADUpdateParams(
+                    type="server_vad",
+                    threshold=0.5,
+                    prefix_padding_ms=300,
+                    silence_duration_ms=500,
+                ),
                 tool_choice="none",
                 tools=[],
                 # tool_choice="auto",
