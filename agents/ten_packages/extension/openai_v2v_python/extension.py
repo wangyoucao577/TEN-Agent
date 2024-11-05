@@ -102,8 +102,10 @@ class OpenAIV2VExtension(Extension):
         self.remote_stream_id: int = 0
         self.stream_id: int = 0
         self.channel_name: str = ""
-        self.dump: bool = False
         self.registry = ToolRegistry()
+
+        self.dump: bool = False
+        self.dump_time: str = datetime.now().strftime("%Y%m%dT%H%M%S")
 
     def on_start(self, ten_env: TenEnv) -> None:
         logger.info("OpenAIV2VExtension on_start")
@@ -734,7 +736,9 @@ class OpenAIV2VExtension(Extension):
         if not self.dump:
             return
 
-        with open("{}_{}.pcm".format(role, self.channel_name), "ab") as dump_file:
+        with open(
+            "{}_{}_{}.pcm".format(role, self.channel_name, self.dump_time), "ab"
+        ) as dump_file:
             dump_file.write(buf)
 
     # def _register_local_tools(self) -> None:
