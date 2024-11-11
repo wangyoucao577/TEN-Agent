@@ -88,7 +88,7 @@ class OpenAIV2VExtension(Extension):
         # audo related
         self.sample_rate: int = 24000
         self.out_audio_buff: bytearray = b""
-        self.audio_len_threshold: int = 10240
+        # self.audio_len_threshold: int = 10240
         self.transcript: str = ""
 
         # misc.
@@ -431,10 +431,11 @@ class OpenAIV2VExtension(Extension):
     async def _on_audio(self, buff: bytearray):
         self.out_audio_buff += buff
         # Buffer audio
-        if (
-            len(self.out_audio_buff) >= self.audio_len_threshold
-            and self.session_id != ""
-        ):
+        # if (
+        #     len(self.out_audio_buff) >= self.audio_len_threshold
+        #     and self.session_id != ""
+        # ):
+        if self.session_id != "":
             await self.conn.send_audio_data(self.out_audio_buff)
             # logger.info(
             #     f"Send audio frame to OpenAI: {len(self.out_audio_buff)}")
