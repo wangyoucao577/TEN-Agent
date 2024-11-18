@@ -88,6 +88,7 @@ class OpenAIV2VExtension(Extension):
         # audo related
         self.sample_rate: int = 24000
         self.out_audio_buff: bytearray = b""
+        self.out_audio_in_bytes: int = 0
         # self.audio_len_threshold: int = 10240
         self.transcript: str = ""
 
@@ -437,8 +438,9 @@ class OpenAIV2VExtension(Extension):
         # ):
         if self.session_id != "":
             await self.conn.send_audio_data(self.out_audio_buff)
-            # logger.info(
-            #     f"Send audio frame to OpenAI: {len(self.out_audio_buff)}")
+            self.out_audio_in_bytes += len(self.out_audio_buff)
+            logger.info(
+                f"Send audio frame to OpenAI: {len(self.out_audio_buff)}, total sent: {self.out_audio_in_bytes}")
             self.out_audio_buff = b""
 
     def _fetch_properties(self, ten_env: TenEnv):
