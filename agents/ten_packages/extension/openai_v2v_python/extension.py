@@ -277,6 +277,11 @@ class OpenAIV2VExtension(Extension):
                                 self.remote_stream_id,
                                 Role.User,
                             )
+
+                            # Write the transcript to a separate file
+                            with open("transcript.txt", "a", encoding="utf-8") as file:
+                                file.write(message.transcript + "\n")
+
                         case ItemInputAudioTranscriptionFailed():
                             logger.warning(
                                 f"On request transcript failed {message.item_id} {message.error}"
@@ -440,7 +445,8 @@ class OpenAIV2VExtension(Extension):
             await self.conn.send_audio_data(self.out_audio_buff)
             self.out_audio_in_bytes += len(self.out_audio_buff)
             logger.info(
-                f"Send audio frame to OpenAI: {len(self.out_audio_buff)}, total sent: {self.out_audio_in_bytes}")
+                f"Send audio frame to OpenAI: {len(self.out_audio_buff)}, total sent: {self.out_audio_in_bytes}"
+            )
             self.out_audio_buff = b""
 
     def _fetch_properties(self, ten_env: TenEnv):

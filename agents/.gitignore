@@ -29,3 +29,4 @@ xdump_config
 .vscode
 *.pyc
 *.pyc.*
+transcript.txt
